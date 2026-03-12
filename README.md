@@ -1,39 +1,46 @@
-## Job Filter & Ranker
+# JobFilter
 
-This small app:
-- **parses** an exported HTML table of jobs
-- **filters** to keep only recent, reasonable matches
-- **ranks** them with OpenAI based on sponsorship likelihood and role fit
+Automatically scrapes, and AI-ranks software engineering internships from [intern-list.com](https://www.intern-list.com).
 
-### Files
+## How it works
 
-- **`app/config.py`**: loads `OPENAI_API_KEY` from the environment and defines a simple `CandidateProfile` with default preferences you can tweak.
-- **`app/parser.py`**: uses BeautifulSoup to convert an HTML `<table>` of jobs into a list of `Job` objects (dict‑serializable).
-- **`app/filter_jobs.py`**: keeps only jobs posted within ~1 day and drops obvious bad fits (unpaid, high‑school only, US‑citizens‑only, etc.).
-- **`app/ranker.py`**: calls the OpenAI API with the candidate profile + filtered jobs, and asks for the top 10 jobs as JSON.
-- **`app/main.py`**: CLI entry point that wires everything together.
+1. **Scrape** — Selenium scrapes up to 250 internship listings from intern-list.com
+2. **Rank** — Claude (with OpenAI fallback) ranks the top 10 best fits based on your candidate profile, prioritizing F-1 visa sponsorship likelihood and role fit
 
-### Setup
+## Setup
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate  # on Windows use: .venv\Scripts\activate
+# Clone the repo
+git clone https://github.com/rastog18/JobFilter.git
+cd JobFilter
+
+# Create and activate a virtual environment
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-Set your OpenAI API key:
-
-```bash
-export OPENAI_API_KEY="sk-..."  # or use your shell's equivalent
+Create a `.env` file in the project root:
+```
+ANTHROPIC_API_KEY=your_claude_key
+OPENAI_API_KEY=your_openai_key
 ```
 
-### Usage
+Update `app/config.py` with your candidate profile.
+
+## Usage
 
 ```bash
-python -m app.main path/to/jobs.html -o job_results.json
+python app/main.py
 ```
 
-The output JSON includes:
-- **`filtered_jobs`**: the jobs that passed basic filters
-- **`ranking`**: up to the top 10 jobs with scores and reasons
+Results are saved to:
+- `data/ranked_jobs.json` — top 10 ranked internships with fit scores
 
+## Requirements
+
+- Python 3.10+
+- Google Chrome + ChromeDriver
+- Anthropic or OpenAI API key
