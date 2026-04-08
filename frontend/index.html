@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JobFilter — Ranked Jobs</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="bg"></div>
+    <header class="header">
+      <div class="header__inner">
+        <div class="brand">
+          <div class="brand__mark" aria-hidden="true"></div>
+          <div class="brand__text">
+            <div class="brand__title">JobFilter</div>
+            <div class="brand__subtitle">Ranked internships</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a class="btn btn--ghost" href="/data/ranked_jobs.json" target="_blank" rel="noreferrer">View JSON</a>
+          <button class="btn" id="refreshBtn" type="button">Refresh</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="panel">
+        <div class="panel__row">
+          <label class="field">
+            <span class="field__label">Search</span>
+            <input
+              id="searchInput"
+              class="input"
+              type="search"
+              placeholder="Company, title, location…"
+              autocomplete="off"
+            />
+          </label>
+
+          <label class="field">
+            <span class="field__label">Sort</span>
+            <select id="sortSelect" class="select">
+              <option value="rank">Rank (best first)</option>
+              <option value="final_score_desc">Final score (high → low)</option>
+              <option value="sponsorship_desc">Sponsorship likelihood (high → low)</option>
+              <option value="role_fit_desc">Role fit (high → low)</option>
+              <option value="company_asc">Company (A → Z)</option>
+            </select>
+          </label>
+
+          <div class="stats" id="stats"></div>
+        </div>
+
+        <div class="hint" id="hint">
+          Tip: run the scraper/ranker first: <code>python app/main.py</code> (it writes <code>data/ranked_jobs.json</code>).
+        </div>
+
+        <div class="updated" id="updated"></div>
+      </section>
+
+      <section class="grid" id="grid" aria-live="polite"></section>
+
+      <section class="empty" id="emptyState" hidden>
+        <div class="empty__title">No results</div>
+        <div class="empty__subtitle">Try a different search query.</div>
+      </section>
+
+      <section class="error" id="errorState" hidden>
+        <div class="error__title">Couldn’t load <code>data/ranked_jobs.json</code></div>
+        <div class="error__subtitle">
+          Make sure you’re serving the repo root (not opening the HTML file directly).
+          <div class="error__code">python -m http.server 8000</div>
+          Then open <code>http://localhost:8000/frontend/</code>.
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer__inner">
+        <div class="footer__left">
+          <span class="dot" aria-hidden="true"></span>
+          Cursor-inspired UI (local only)
+        </div>
+        <div class="footer__right">
+          <a class="link" href="https://www.intern-list.com" target="_blank" rel="noreferrer">intern-list.com</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="./app.js" defer></script>
+  </body>
+</html>

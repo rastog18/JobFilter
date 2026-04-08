@@ -39,6 +39,33 @@ python app/main.py
 Results are saved to:
 - `data/ranked_jobs.json` — top 10 ranked internships with fit scores
 
+## Frontend (static)
+
+The UI is a static site in `frontend/`. It reads `frontend/data/ranked_jobs.json`.
+
+### Run locally
+
+```bash
+python -m http.server 8000
+```
+
+Open:
+
+- `http://127.0.0.1:8000/frontend/`
+
+### Deploy (Vercel)
+
+- Set **Root Directory** to `frontend`
+- No build command needed
+
+### Auto-refresh (GitHub Actions)
+
+This repo includes a scheduled workflow that runs `python app/main.py` and commits updated JSON to `frontend/data/ranked_jobs.json`.
+
+You must set at least one repo secret:
+
+- `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`
+
 ## Requirements
 
 - Python 3.10+

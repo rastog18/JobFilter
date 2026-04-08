@@ -39,7 +39,14 @@ def scroll(driver, container, px: int = 1200):
 
 def scrape_intern_list(n: int = 50):
     chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_experimental_option("detach", True)
+    # In CI / headless environments (GitHub Actions), we need headless Chrome.
+    # For local runs, keeping a visible window is fine.
+    if os.getenv("CI") or os.getenv("HEADLESS") in {"1", "true", "True"}:
+        chrome_options.add_argument("--headless=new")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+    else:
+        chrome_options.add_experimental_option("detach", True)
     driver = webdriver.Chrome(options=chrome_options)
 
     driver.get("https://www.intern-list.com/?k=swe")
