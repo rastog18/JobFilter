@@ -60,7 +60,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          for f in frontend/data/ranked_jobs.json data/ranked_jobs.json frontend/data/last_refresh.json; do
+          # Only frontend/data/ is tracked; repo-root /data/ is gitignored (local scrape output).
+          for f in frontend/data/ranked_jobs.json frontend/data/last_refresh.json; do
             if [ -f "$f" ]; then git add "$f"; fi
           done
           if git diff --cached --quiet; then
