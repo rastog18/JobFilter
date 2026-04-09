@@ -46,6 +46,14 @@ jobs:
         run: |
           python app/main.py
 
+      - name: Upload debug artifacts (if any)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-debug
+          path: |
+            data/ci_debug/*
+
       - name: Commit updated JSON (if changed)
         uses: stefanzweifel/git-auto-commit-action@v5
         with:

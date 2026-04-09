@@ -1,11 +1,15 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 import time
 import csv
 import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
+CI_DEBUG_DIR = os.path.join(DATA, "ci_debug")
 
 def find_scroll_container(driver):
     """
@@ -36,6 +40,38 @@ def scroll(driver, container, px: int = 1200):
     else:
         driver.execute_script("document.documentElement.scrollTop += arguments[0];", px)
 
+def _maybe_dump_debug(driver, label: str):
+    if not os.getenv("CI"):
+        return
+    os.makedirs(CI_DEBUG_DIR, exist_ok=True)
+    try:
+        driver.save_screenshot(os.path.join(CI_DEBUG_DIR, f"{label}.png"))
+    except Exception:
+        pass
+    try:
+        with open(os.path.join(CI_DEBUG_DIR, f"{label}.html"), "w", encoding="utf-8") as f:
+            f.write(driver.page_source)
+    except Exception:
+        pass
+
+def _switch_to_jobs_frame(driver) -> bool:
+    """
+    intern-list.com renders results inside an iframe. In CI/headless this can shift.
+    Try each iframe until we find the jobs table rows.
+    """
+    driver.switch_to.default_content()
+    frames = driver.find_elements(By.TAG_NAME, "iframe")
+    for idx in range(len(frames)):
+        try:
+            driver.switch_to.default_content()
+            driver.switch_to.frame(idx)
+            if driver.find_elements(By.CSS_SELECTOR, "tr[class*='tableRow']"):
+                return True
+        except Exception:
+            continue
+    driver.switch_to.default_content()
+    return False
+
 
 def scrape_intern_list(n: int = 50):
     chrome_options = webdriver.ChromeOptions()
@@ -47,15 +83,32 @@ def scrape_intern_list(n: int = 50):
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--window-size=1440,900")
         chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--disable-blink-features=AutomationControlled")
     else:
         chrome_options.add_experimental_option("detach", True)
     driver = webdriver.Chrome(options=chrome_options)
 
     driver.get("https://www.intern-list.com/?k=swe")
-    time.sleep(10)
+    wait = WebDriverWait(driver, 30)
+    try:
+        wait.until(lambda d: d.execute_script("return document.readyState") == "complete")
+    except Exception:
+        pass
 
-    driver.switch_to.frame(0)
-    time.sleep(3)
+    # Wait for iframes to appear, then switch to the one containing the jobs table.
+    try:
+        wait.until(lambda d: len(d.find_elements(By.TAG_NAME, "iframe")) > 0)
+    except TimeoutException:
+        _maybe_dump_debug(driver, "no_iframe")
+
+    if not _switch_to_jobs_frame(driver):
+        _maybe_dump_debug(driver, "no_jobs_frame")
+    else:
+        # Wait briefly for at least one row to appear in the chosen frame.
+        try:
+            wait.until(lambda d: len(d.find_elements(By.CSS_SELECTOR, "tr[class*='tableRow']")) > 0)
+        except TimeoutException:
+            _maybe_dump_debug(driver, "no_rows_after_frame_switch")
 
     container = find_scroll_container(driver)
 
