@@ -1,4 +1,4 @@
-const DATA_URL = "./data/ranked_jobs.json";
+const DATA_URL = "/data/ranked_jobs.json";
 
 const el = {
   grid: document.getElementById("grid"),

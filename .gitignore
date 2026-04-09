@@ -2,7 +2,8 @@ venv/
 __pycache__/
 *.pyc
 .env
-data/
+# Only ignore repo-root data (scrape output). Keep frontend/data/ for deployed JSON.
+/data/
 jobs.csv
 app/__pycache__/
 .DS_Store

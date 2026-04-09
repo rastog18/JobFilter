@@ -45,13 +45,18 @@ The UI is a static site in `frontend/`. It reads `frontend/data/ranked_jobs.json
 
 ### Run locally
 
+Use the same URL layout as Vercel (site root = `frontend/`):
+
 ```bash
+cd frontend
 python -m http.server 8000
 ```
 
 Open:
 
-- `http://127.0.0.1:8000/frontend/`
+- `http://127.0.0.1:8000/`
+
+(If you serve from the **repo root**, `/styles.css` would 404 — run the server **inside** `frontend/` as above.)
 
 ### Deploy (Vercel)
 
