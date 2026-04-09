@@ -18,7 +18,11 @@ def main():
     print(f"Scraped {len(jobs)} jobs.")
 
     if not jobs:
-        print("No jobs scraped. Exiting.")
+        msg = "No jobs scraped."
+        # In CI, don't silently succeed with stale JSON.
+        if os.getenv("CI"):
+            raise RuntimeError(f"{msg} Failing CI run to avoid stale output.")
+        print(f"{msg} Exiting.")
         return
 
     ranked = rank_jobs(jobs)
