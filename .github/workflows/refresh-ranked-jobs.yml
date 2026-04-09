@@ -57,8 +57,16 @@ jobs:
             data/ci_debug/*
 
       - name: Commit updated JSON (if changed)
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "chore: refresh ranked jobs"
-          file_pattern: "frontend/data/ranked_jobs.json frontend/data/last_refresh.json data/ranked_jobs.json"
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for f in frontend/data/ranked_jobs.json data/ranked_jobs.json frontend/data/last_refresh.json; do
+            if [ -f "$f" ]; then git add "$f"; fi
+          done
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+          else
+            git commit -m "chore: refresh ranked jobs"
+            git push
+          fi
 
