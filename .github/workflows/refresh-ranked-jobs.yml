@@ -44,6 +44,8 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           CI: "1"
         run: |
+          if [ -n "${ANTHROPIC_API_KEY}" ]; then echo "ANTHROPIC_API_KEY is set"; else echo "ANTHROPIC_API_KEY is MISSING"; fi
+          if [ -n "${OPENAI_API_KEY}" ]; then echo "OPENAI_API_KEY is set"; else echo "OPENAI_API_KEY is MISSING"; fi
           python app/main.py
 
       - name: Upload debug artifacts (if any)
@@ -58,5 +60,5 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore: refresh ranked jobs"
-          file_pattern: "frontend/data/ranked_jobs.json data/ranked_jobs.json"
+          file_pattern: "frontend/data/ranked_jobs.json frontend/data/last_refresh.json data/ranked_jobs.json"
 

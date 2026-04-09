@@ -43,6 +43,7 @@ Jobs:
 
 def _rank_with_claude(prompt: str) -> Optional[str]:
     if not CLAUDE_API_KEY:
+        print("[ranker] Claude key missing; skipping Claude.")
         return None
     try:
         client = Anthropic(api_key=CLAUDE_API_KEY)
@@ -60,6 +61,7 @@ def _rank_with_claude(prompt: str) -> Optional[str]:
 
 def _rank_with_openai(prompt: str) -> Optional[str]:
     if not OPENAI_API_KEY:
+        print("[ranker] OpenAI key missing; skipping OpenAI.")
         return None
     try:
         client = OpenAI(api_key=OPENAI_API_KEY)
