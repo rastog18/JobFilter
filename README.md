@@ -4,8 +4,8 @@ Automatically scrapes, and AI-ranks software engineering internships from [inter
 
 ## How it works
 
-1. **Scrape** — Selenium scrapes up to 250 internship listings from intern-list.com
-2. **Rank** — Claude (with OpenAI fallback) ranks the top 10 best fits based on your candidate profile, prioritizing F-1 visa sponsorship likelihood and role fit
+1. **Scrape** — Selenium collects up to **200** internship listings from intern-list.com (deeper scroll than a single shallow pass)
+2. **Rank** — Claude (with OpenAI fallback) ranks the top **20** best fits based on your candidate profile, prioritizing F-1 visa sponsorship likelihood and role fit
 
 ## Setup
 
@@ -37,7 +37,8 @@ python app/main.py
 ```
 
 Results are saved to:
-- `data/ranked_jobs.json` — top 10 ranked internships with fit scores
+- `data/ranked_jobs.json` — top 20 ranked internships (local; folder is gitignored)
+- `frontend/data/ranked_jobs.json` — same JSON for the static site / Vercel
 
 ## Frontend (static)
 
@@ -62,6 +63,15 @@ Open:
 
 - Set **Root Directory** to `frontend`
 - No build command needed
+
+**Refresh button → GitHub Actions:** the UI calls `POST /api/trigger-workflow` (see `frontend/api/trigger-workflow.js`). In Vercel → **Settings → Environment Variables**, add:
+
+- **`GITHUB_TOKEN`** — fine-grained PAT with **Contents** + **Actions** (workflow dispatch) for this repo  
+- **`GITHUB_REPO`** (optional) — default `rastog18/JobFilter`  
+- **`GITHUB_WORKFLOW_FILE`** (optional) — default `refresh-ranked-jobs.yml`  
+- **`TRIGGER_SECRET`** (optional) — if set, the browser must send the same value in header `x-trigger-secret`. Easiest: in the browser console once:  
+  `localStorage.setItem('jobfilterTriggerSecret', 'YOUR_SECRET')`  
+  (must match `TRIGGER_SECRET` in Vercel)
 
 ### Auto-refresh (GitHub Actions)
 

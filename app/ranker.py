@@ -8,6 +8,8 @@ from openai import OpenAI, OpenAIError, RateLimitError
 
 from config import OPENAI_API_KEY, CLAUDE_API_KEY, CANDIDATE_PROFILE
 
+TOP_N = 20
+
 
 def _build_prompt(jobs: list[dict]) -> str:
     return f"""
@@ -17,12 +19,12 @@ Your task:
 1. Prioritize companies highly likely to sponsor F-1 international students (OPT/CPT).
 2. Prioritize roles that best match a software engineering internship profile.
 3. Filter out weak fits (unpaid, non-technical, poor sponsorship likelihood).
-4. Return the top 10 in ranked order.
+4. Return the top {TOP_N} in ranked order.
 5. Do not include TikTok or ByteDance in the results.
 
 {CANDIDATE_PROFILE}
 
-For each of the top 10, return a JSON object with:
+For each of the top {TOP_N}, return a JSON object with:
 - rank (int)
 - title (str)
 - company (str)
@@ -49,7 +51,7 @@ def _rank_with_claude(prompt: str) -> Optional[str]:
         client = Anthropic(api_key=CLAUDE_API_KEY)
         resp = client.messages.create(
             model="claude-opus-4-6",
-            max_tokens=4096,
+            max_tokens=8192,
             messages=[{"role": "user", "content": prompt}],
         )
         parts = [b.text for b in resp.content if getattr(b, "type", "") == "text"]
@@ -68,7 +70,7 @@ def _rank_with_openai(prompt: str) -> Optional[str]:
         resp = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=4096,
+            max_tokens=8192,
         )
         return resp.choices[0].message.content
     except (RateLimitError, OpenAIError) as e:

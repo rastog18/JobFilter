@@ -1,4 +1,3 @@
-import json
 import os
 
 from scrape import scrape_intern_list
@@ -14,7 +13,8 @@ def main():
     os.makedirs(FRONTEND_DATA, exist_ok=True)
 
     print("Scraping jobs...")
-    jobs = scrape_intern_list(n=150)
+    # ~two “pages” of scroll collection vs a single shallow pass
+    jobs = scrape_intern_list(n=200)
     print(f"Scraped {len(jobs)} jobs.")
 
     if not jobs:

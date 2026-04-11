@@ -54,13 +54,19 @@
         </div>
 
         <div class="hint" id="hint">
-          Tip: run the scraper/ranker first: <code>python app/main.py</code> (it writes <code>data/ranked_jobs.json</code>).
+          Tip: <strong>Refresh</strong> queues the GitHub Action on Vercel (needs <code>GITHUB_TOKEN</code> env). Locally it only reloads JSON. Pipeline: <code>python app/main.py</code>.
         </div>
 
         <div class="updated" id="updated"></div>
       </section>
 
       <section class="grid" id="grid" aria-live="polite"></section>
+
+      <nav class="pager" id="pager" hidden aria-label="Pagination">
+        <button type="button" class="btn btn--ghost" id="prevPage">Previous</button>
+        <span class="pager__info" id="pageInfo"></span>
+        <button type="button" class="btn btn--ghost" id="nextPage">Next</button>
+      </nav>
 
       <section class="empty" id="emptyState" hidden>
         <div class="empty__title">No results</div>

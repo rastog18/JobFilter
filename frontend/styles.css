@@ -398,3 +398,18 @@ code{
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 12px;
 }
+
+.pager{
+  margin-top: 14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap: 14px;
+  flex-wrap:wrap;
+}
+.pager__info{
+  color: var(--muted);
+  font-size: 13px;
+  min-width: 120px;
+  text-align:center;
+}
