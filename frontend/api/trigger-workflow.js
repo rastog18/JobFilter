@@ -11,6 +11,18 @@ module.exports = async (req, res) => {
     res.status(204).end();
     return;
   }
+  // Quick check that this function deployed (open in browser while debugging).
+  if (req.method === "GET") {
+    res.status(200).json({
+      ok: true,
+      hasGithubToken: Boolean(process.env.GITHUB_TOKEN),
+      triggerSecretRequired: Boolean(process.env.TRIGGER_SECRET),
+      repo: process.env.GITHUB_REPO || "rastog18/JobFilter",
+      workflow: process.env.GITHUB_WORKFLOW_FILE || "refresh-ranked-jobs.yml",
+      usage: "POST this URL to queue workflow_dispatch (see README).",
+    });
+    return;
+  }
   if (req.method !== "POST") {
     res.status(405).json({ ok: false, error: "Method not allowed" });
     return;
@@ -62,9 +74,17 @@ module.exports = async (req, res) => {
 
   if (gh.status !== 204) {
     const text = await gh.text();
+    let detail = text;
+    try {
+      const j = JSON.parse(text);
+      if (j && j.message) detail = j.message;
+    } catch {
+      /* keep raw */
+    }
     res.status(gh.status >= 400 ? gh.status : 502).json({
       ok: false,
-      error: text || `GitHub API error (${gh.status})`,
+      error: detail || `GitHub API error (${gh.status})`,
+      github_status: gh.status,
     });
     return;
   }

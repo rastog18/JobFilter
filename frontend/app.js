@@ -218,8 +218,8 @@ async function triggerWorkflow() {
     payload = { raw: text };
   }
   if (!res.ok) {
-    const msg = payload?.error || payload?.raw || `HTTP ${res.status}`;
-    throw new Error(msg);
+    const detail = payload?.error || payload?.raw || text;
+    throw new Error(`HTTP ${res.status}: ${detail}`);
   }
   return payload;
 }
@@ -252,43 +252,46 @@ el.nextPage.addEventListener("click", () => {
 
 el.refresh.addEventListener("click", async () => {
   const clickedAt = new Date();
-  setUpdatedText(`Last refresh clicked: ${clickedAt.toLocaleString()}`);
+  const ts = clickedAt.toLocaleString();
+  setUpdatedText(`${ts} — Starting refresh…`);
 
   el.refresh.disabled = true;
   el.refresh.textContent = "Refreshing…";
   try {
-    let workflowQueued = false;
+    const lines = [`Clicked: ${ts}`];
+    let dispatchOk = false;
     try {
       await triggerWorkflow();
-      workflowQueued = true;
-      setUpdatedText(
-        `${clickedAt.toLocaleString()} — GitHub workflow queued. New data may take a few minutes; reloading JSON…`
+      dispatchOk = true;
+      lines.push(
+        "Dispatch: OK — open GitHub → Actions → “Refresh ranked jobs” to watch the run (new commit may take a few minutes)."
       );
     } catch (e) {
       const msg = safeText(e?.message || e);
-      const isNoApi =
-        msg.includes("404") ||
-        msg.includes("Failed to fetch") ||
-        msg.includes("GITHUB_TOKEN") ||
-        msg.includes("load failed");
-      if (isNoApi) {
-        setUpdatedText(
-          `${clickedAt.toLocaleString()} — No /api on this host (local static server). Reloaded JSON only. On Vercel, set GITHUB_TOKEN env + redeploy.`
+      lines.push(`Dispatch: FAILED — ${msg}`);
+      if (msg.includes("HTTP 404")) {
+        lines.push(
+          "Hint: GET /api/trigger-workflow in the browser. If that 404s too, the serverless function is not deployed (redeploy Vercel; Root Directory = frontend)."
         );
-      } else {
-        setUpdatedText(`${clickedAt.toLocaleString()} — Workflow trigger failed: ${msg}`);
+      }
+      if (msg.includes("HTTP 401") || msg.includes("Unauthorized")) {
+        lines.push(
+          "Hint: If TRIGGER_SECRET is set in Vercel, run in console: localStorage.setItem('jobfilterTriggerSecret','YOUR_SECRET')"
+        );
+      }
+      if (msg.includes("HTTP 503") || msg.includes("GITHUB_TOKEN")) {
+        lines.push("Hint: Add GITHUB_TOKEN in Vercel → Environment Variables, then Redeploy (Production).");
       }
     }
 
     await load();
 
-    if (workflowQueued) {
-      setUpdatedText(
-        `${clickedAt.toLocaleString()} — Workflow queued; JSON reloaded (may still be old until the run finishes).`
-      );
-    } else {
-      setUpdatedText(`${clickedAt.toLocaleString()} — JSON reloaded.`);
-    }
+    lines.push(
+      dispatchOk
+        ? "JSON reloaded (may still look old until the workflow commits new frontend/data/ranked_jobs.json)."
+        : "JSON reloaded."
+    );
+    setUpdatedText(lines.join(" "));
   } finally {
     el.refresh.disabled = false;
     el.refresh.textContent = "Refresh";

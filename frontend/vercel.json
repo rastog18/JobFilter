@@ -2,5 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "echo 'static site — skip install'",
   "buildCommand": "echo 'static site — skip build'",
-  "outputDirectory": "."
+  "outputDirectory": ".",
+  "functions": {
+    "api/trigger-workflow.js": {
+      "maxDuration": 30
+    }
+  }
 }

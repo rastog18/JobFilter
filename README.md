@@ -66,12 +66,16 @@ Open:
 
 **Refresh button → GitHub Actions:** the UI calls `POST /api/trigger-workflow` (see `frontend/api/trigger-workflow.js`). In Vercel → **Settings → Environment Variables**, add:
 
-- **`GITHUB_TOKEN`** — fine-grained PAT with **Contents** + **Actions** (workflow dispatch) for this repo  
+- **`GITHUB_TOKEN`** — fine-grained PAT for this repo with **Actions: Read and write** (and **Contents: Read** at minimum). Classic PAT needs **`repo`** + **`workflow`**.  
 - **`GITHUB_REPO`** (optional) — default `rastog18/JobFilter`  
 - **`GITHUB_WORKFLOW_FILE`** (optional) — default `refresh-ranked-jobs.yml`  
 - **`TRIGGER_SECRET`** (optional) — if set, the browser must send the same value in header `x-trigger-secret`. Easiest: in the browser console once:  
   `localStorage.setItem('jobfilterTriggerSecret', 'YOUR_SECRET')`  
   (must match `TRIGGER_SECRET` in Vercel)
+
+After changing env vars, click **Redeploy** on the latest Production deployment (env changes are not always picked up by old deploys).
+
+**Sanity check:** open `https://YOUR_DEPLOYMENT.vercel.app/api/trigger-workflow` in a browser — you should see JSON with `"hasGithubToken": true` once `GITHUB_TOKEN` is configured.
 
 ### Auto-refresh (GitHub Actions)
 
