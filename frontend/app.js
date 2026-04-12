@@ -2,6 +2,7 @@ const DATA_URL = "/data/ranked_jobs.json";
 const TRIGGER_URL = "/api/trigger-workflow";
 const PAGE_SIZE = 10;
 const TRIGGER_SECRET_STORAGE_KEY = "jobfilterTriggerSecret";
+const APPLIED_JOBS_STORAGE_KEY = "jobfilterAppliedIds";
 
 const el = {
   grid: document.getElementById("grid"),
@@ -13,6 +14,7 @@ const el = {
   error: document.getElementById("errorState"),
   hint: document.getElementById("hint"),
   refresh: document.getElementById("refreshBtn"),
+  viewJson: document.getElementById("viewJsonLink"),
   pager: document.getElementById("pager"),
   prevPage: document.getElementById("prevPage"),
   nextPage: document.getElementById("nextPage"),
@@ -22,6 +24,39 @@ const el = {
 /** @type {Array<any>} */
 let jobs = [];
 let pageIndex = 0;
+
+/** @returns {Set<string>} */
+function getAppliedIds() {
+  try {
+    const raw = localStorage.getItem(APPLIED_JOBS_STORAGE_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(arr) ? arr.filter((x) => typeof x === "string") : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function setAppliedIds(set) {
+  localStorage.setItem(APPLIED_JOBS_STORAGE_KEY, JSON.stringify([...set]));
+}
+
+function jobStableId(job) {
+  const href = safeText(job.apply).trim();
+  if (href) return `url:${href}`;
+  return `rk:${safeText(job.rank)}|${safeText(job.company)}|${safeText(job.title)}`;
+}
+
+function syncViewJsonVisibility() {
+  if (!el.viewJson) return;
+  el.viewJson.hidden = getAppliedIds().size > 0;
+}
+
+function markJobApplied(id) {
+  const s = getAppliedIds();
+  s.add(id);
+  setAppliedIds(s);
+  syncViewJsonVisibility();
+}
 
 function setUpdatedText(text) {
   el.updated.textContent = text;
@@ -96,11 +131,13 @@ function renderStats(visibleCount, totalCount, pageSliceCount, totalPages, curre
   el.stats.innerHTML = pills;
 }
 
-function card(job) {
+function card(job, appliedIds) {
   const applyHref = safeText(job.apply);
   const finalScore = job.final_score;
   const sponsorship = job.sponsorship_likelihood;
   const roleFit = job.role_fit;
+  const stableId = jobStableId(job);
+  const isApplied = appliedIds.has(stableId);
 
   const finalClass = `badge ${scoreTone(finalScore)}`;
   const sponsorshipClass = `badge ${scoreTone(sponsorship)}`;
@@ -125,12 +162,18 @@ function card(job) {
       ? `<span class="${roleFitClass}"><span>Fit</span> <b>${roleFit.toFixed(0)}/10</b></span>`
       : "";
 
+  const applyClasses = ["apply", isApplied ? "apply--applied" : ""].filter(Boolean).join(" ");
+  const applyLabel = isApplied ? "Applied" : "Apply";
   const applyBtn = applyHref
-    ? `<a class="apply" href="${applyHref}" target="_blank" rel="noreferrer">Apply</a>`
+    ? `<a class="${applyClasses}" href="${applyHref}" target="_blank" rel="noreferrer" data-job-id="${encodeURIComponent(
+        stableId
+      )}">${applyLabel}</a>`
     : `<span class="badge badge--warn">No apply link</span>`;
 
+  const cardClass = ["card", isApplied ? "card--applied" : ""].filter(Boolean).join(" ");
+
   return `
-    <article class="card">
+    <article class="${cardClass}" data-job-id="${encodeURIComponent(stableId)}">
       <div class="card__top">
         <div>
           <div class="rank">
@@ -168,8 +211,10 @@ function render() {
   if (pageIndex >= totalPages) pageIndex = 0;
 
   const slice = visible.slice(pageIndex * PAGE_SIZE, (pageIndex + 1) * PAGE_SIZE);
+  const appliedIds = getAppliedIds();
 
-  el.grid.innerHTML = slice.map(card).join("");
+  el.grid.innerHTML = slice.map((j) => card(j, appliedIds)).join("");
+  syncViewJsonVisibility();
   el.empty.hidden = visible.length !== 0;
   renderStats(visible.length, jobs.length, slice.length, totalPages, pageIndex + 1);
 
@@ -298,4 +343,19 @@ el.refresh.addEventListener("click", async () => {
   }
 });
 
+el.grid.addEventListener("click", (e) => {
+  const t = e.target;
+  if (!(t instanceof Element)) return;
+  const a = t.closest("a.apply[data-job-id]");
+  if (!a) return;
+  const id = decodeURIComponent(a.getAttribute("data-job-id") || "");
+  if (!id) return;
+  markJobApplied(id);
+  a.classList.add("apply--applied");
+  a.textContent = "Applied";
+  const article = a.closest("article.card");
+  if (article) article.classList.add("card--applied");
+});
+
+syncViewJsonVisibility();
 load();
